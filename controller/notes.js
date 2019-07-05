@@ -81,7 +81,7 @@ exports.postNotes = (req, res) => {
 						response.empty(res)
 					} else {
 						connection.query(
-							`SELECT notes.id, title, description, time, categories.category FROM notes JOIN categories ON notes.category = categories.id ORDER BY time DESC LIMIT 1`,
+							`SELECT notes.id, title, description, time, categories.categoryName FROM notes JOIN categories ON notes.category = categories.id ORDER BY time DESC LIMIT 1`,
 							(error, rows, fields) => {
 								if (error) {
 									response.error(error, res)
@@ -113,7 +113,7 @@ exports.patchNotes = (req, res) => {
 					response.empty(res)
 				} else {
 					connection.query(
-						`SELECT notes.id, title, description, time, categories.category, categories.id FROM notes JOIN categories ON notes.category = categories.id WHERE notes.id = ${id}`,
+						`SELECT notes.id, title, description, time, categories.categoryName, categories.id FROM notes JOIN categories ON notes.category = categories.id WHERE notes.id = ${id}`,
 						(error, rows, fields) => {
 							if (error) {
 								response.error(error, res)
@@ -137,11 +137,7 @@ exports.deleteNotes = (req, res) => {
 				if (error) {
 					response.error(error, res)
 				} else {
-					if (rows.length > 0) {
-						response.delete(id, res)
-					} else {
-						response.empty(res)
-					}
+					response.delete(id, res)
 				}
 			}
 		);
