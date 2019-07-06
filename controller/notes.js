@@ -6,20 +6,21 @@ const isEmpty = require('lodash.isempty')
 
 exports.getNotes = (req, res) => {
 	let search = req.query.search || '';
+	let searchBy = req.query.searchBy || 'title';
 	let sort = req.query.sort || 'desc';
 	let pages = req.query.page || 1;
 	let limit = req.query.limit || 10;
 	let offset = ((parseInt(pages) - 1)*limit);
 	let total, totalPage, message, query;
 
-	if (search != null || sort != null || pages != null || limit != null) {
-		query = `SELECT notes.id, title, description, time, categories.categoryName, notes.category FROM notes JOIN categories ON notes.category = categories.id WHERE title LIKE '%${search}%' ORDER BY time ${sort} LIMIT ${limit} OFFSET ${offset}`;
+	if (search != null || sort != null || pages != null || limit != null || searchBy != null) {
+		query = `SELECT notes.id, title, description, time, categories.categoryName, notes.category FROM notes LEFT JOIN categories ON notes.category = categories.id WHERE ${searchBy} LIKE '%${search}%' ORDER BY time ${sort} LIMIT ${limit} OFFSET ${offset}`;
 	} else {
-		query = `SELECT notes.id, title, description, time, categories.categoryName, notes.category FROM notes JOIN categories ON notes.category = categories.id ORDER BY time ${sort}`;
+		query = `SELECT notes.id, title, description, time, categories.categoryName, notes.category FROM notes LEFT JOIN categories ON notes.category = categories.id ORDER BY time ${sort}`;
 	}
 
 	connection.query(
-		`SELECT COUNT(*) AS total FROM notes WHERE title LIKE '%${search}%'`,
+		`SELECT COUNT(*) AS total FROM notes WHERE ${searchBy} LIKE '%${search}%'`,
 		(error, rows, field) => {
 			total = rows[0].total;
 			totalPage = Math.ceil(total/limit);
