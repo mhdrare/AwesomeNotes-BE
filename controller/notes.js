@@ -6,21 +6,58 @@ const isEmpty = require('lodash.isempty')
 
 exports.getNotes = (req, res) => {
 	let search = req.query.search || '';
-	let searchBy = req.query.searchBy || 'title';
+	let sort = req.query.sort || 'desc';
+	let pages = req.query.page || 1;
+	let limit = req.query.limit || 10;
+	let offset = ((parseInt(pages) - 1)*limit);
+	let total, totalPage, message, query, countquery;
+
+	if (search != null || sort != null || pages != null || limit != null) {
+		query = `SELECT notes.id, title, description, time, categories.categoryName, notes.category FROM notes LEFT JOIN categories ON notes.category = categories.id WHERE title LIKE '%${search}%' ORDER BY time ${sort} LIMIT ${limit} OFFSET ${offset}`;
+	} else {
+		query = `SELECT notes.id, title, description, time, categories.categoryName, notes.category FROM notes LEFT JOIN categories ON notes.category = categories.id ORDER BY time ${sort}`;
+	}
+
+	connection.query(
+		`SELECT COUNT(*) AS total FROM notes WHERE title LIKE '%${search}%'`,
+		(error, rows, field) => {
+			total = rows[0].total;
+			totalPage = Math.ceil(total/limit);
+		}
+	)
+
+	connection.query(
+		query,
+		(error, rows, fields) => {
+			if (error) {
+				response.error(error, res)
+			} else {
+				if (rows.length === 0 || rows.length === '') {
+					if (pages >= totalPage) {
+						response.empty(res)
+					}
+				} else {
+					response.pages(pages, limit, total, totalPage, rows, res);
+				}
+			}
+		}
+	);
+}
+
+exports.getNotesByCategories = (req, res) => {
+	let id = req.params.catid;
 	let sort = req.query.sort || 'desc';
 	let pages = req.query.page || 1;
 	let limit = req.query.limit || 10;
 	let offset = ((parseInt(pages) - 1)*limit);
 	let total, totalPage, message, query;
 
-	if (search != null || sort != null || pages != null || limit != null || searchBy != null) {
-		query = `SELECT notes.id, title, description, time, categories.categoryName, notes.category FROM notes LEFT JOIN categories ON notes.category = categories.id WHERE ${searchBy} LIKE '%${search}%' ORDER BY time ${sort} LIMIT ${limit} OFFSET ${offset}`;
-	} else {
-		query = `SELECT notes.id, title, description, time, categories.categoryName, notes.category FROM notes LEFT JOIN categories ON notes.category = categories.id ORDER BY time ${sort}`;
+	if (id != null || sort != null || pages != null || limit != null) {
+		query = `SELECT notes.id, title, description, time, categories.categoryName, notes.category FROM notes LEFT JOIN categories ON notes.category = categories.id WHERE category = ${id} ORDER BY time ${sort} LIMIT ${limit} OFFSET ${offset}`;
 	}
 
 	connection.query(
-		`SELECT COUNT(*) AS total FROM notes WHERE ${searchBy} LIKE '%${search}%'`,
+		`SELECT COUNT(*) AS total FROM notes WHERE category = ${id}`,
 		(error, rows, field) => {
 			total = rows[0].total;
 			totalPage = Math.ceil(total/limit);
@@ -49,7 +86,7 @@ exports.getNotesById = (req, res) => {
 	let id = req.params.id;
 
 	connection.query(
-		`SELECT notes.id, title, description, time, categories.category FROM notes JOIN categories ON notes.category = categories.id WHERE notes.id = '${id}'`,
+		`SELECT notes.id, title, description, time, categories.categoryName FROM notes LEFT JOIN categories ON notes.category = categories.id WHERE notes.id = '${id}'`,
 		(error, rows, fields) => {
 			if (error) {
 				response.error(error, res)

@@ -6,6 +6,7 @@ module.exports = function (app) {
 
 	app.get('/notes', notes.getNotes)
 	app.get('/notes/:id', notes.getNotesById)
+	app.get('/notes/category/:catid', notes.getNotesByCategories)
 	app.post('/notes/', notes.postNotes)
 	app.patch('/notes/:id', notes.patchNotes)
 	app.delete('/notes/:id', notes.deleteNotes)
