@@ -1,4 +1,4 @@
-'user strict';
+'use strict';
 
 module.exports = function (app) {
 	const categories = require('../controller/categories')
